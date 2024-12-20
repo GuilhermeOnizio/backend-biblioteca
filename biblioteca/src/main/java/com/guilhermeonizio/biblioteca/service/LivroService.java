@@ -21,7 +21,11 @@ public class LivroService {
     private UsuarioRepository usuarioRepository;
 
     public List<Livro> listarLivros() {
-        return livroRepository.findAll();
+        try {
+            return livroRepository.findAll();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao acessar o banco de dados", e);
+        }
     }
 
     public Livro buscarLivro(Long id) {

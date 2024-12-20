@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/livros")
+@RequestMapping("/api/livros")
+@CrossOrigin(origins = "http://localhost:3000")
 public class LivroController {
 
     @Autowired
@@ -20,7 +21,11 @@ public class LivroController {
 
     @GetMapping
     public List<Livro> listarLivros() {
-        return livroService.listarLivros();
+        try {
+            return livroService.listarLivros();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao listar livros", e);
+        }
     }
 
     @GetMapping("/{id}")
