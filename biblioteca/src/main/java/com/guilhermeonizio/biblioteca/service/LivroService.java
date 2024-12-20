@@ -1,5 +1,7 @@
 package com.guilhermeonizio.biblioteca.service;
 
+import com.guilhermeonizio.biblioteca.exception.ResourceNotFoundException;
+import com.guilhermeonizio.biblioteca.exception.BusinessException;
 import com.guilhermeonizio.biblioteca.model.Livro;
 import com.guilhermeonizio.biblioteca.model.Usuario;
 import com.guilhermeonizio.biblioteca.repository.LivroRepository;
@@ -8,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class LivroService {
@@ -23,8 +24,9 @@ public class LivroService {
         return livroRepository.findAll();
     }
 
-    public Optional<Livro> buscarLivro(Long id) {
-        return livroRepository.findById(id);
+    public Livro buscarLivro(Long id) {
+        return livroRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Livro com ID " + id + " não encontrado."));
     }
 
     public Livro adicionarLivro(Livro livro) {
@@ -32,32 +34,28 @@ public class LivroService {
     }
 
     public void excluirLivro(Long id) {
-        livroRepository.deleteById(id);
+        Livro livro = buscarLivro(id); // Garante que o livro exista antes de excluir
+        livroRepository.delete(livro);
     }
 
     public Livro emprestarLivro(Long livroId, Long usuarioId) {
-        Optional<Livro> livroOptional = livroRepository.findById(livroId);
+        // Verifica se o livro existe
+        Livro livro = livroRepository.findById(livroId)
+                .orElseThrow(() -> new ResourceNotFoundException("Livro com ID " + livroId + " não encontrado."));
 
-        if (livroOptional.isPresent()) {
-            Livro livro = livroOptional.get();
-
-            if (!livro.isEmprestado()) {
-                Optional<Usuario> usuarioOptional = usuarioRepository.findById(usuarioId);
-
-                if (usuarioOptional.isPresent()) {
-                    Usuario usuario = usuarioOptional.get();
-                    livro.setEmprestado(true);
-                    livro.setUsuario(usuario);
-
-                    return livroRepository.save(livro);
-                } else {
-                    throw new IllegalArgumentException("Usuário com ID " + usuarioId + " não encontrado.");
-                }
-            } else {
-                throw new IllegalStateException("O livro já está emprestado.");
-            }
-        } else {
-            throw new IllegalArgumentException("Livro com ID " + livroId + " não encontrado.");
+        // Verifica se o livro já está emprestado
+        if (livro.isEmprestado()) {
+            throw new BusinessException("O livro já está emprestado.");
         }
+
+        // Verifica se o usuário existe
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário com ID " + usuarioId + " não encontrado."));
+
+        // Atualiza o status do livro e associa ao usuário
+        livro.setEmprestado(true);
+        livro.setUsuario(usuario);
+
+        return livroRepository.save(livro);
     }
 }

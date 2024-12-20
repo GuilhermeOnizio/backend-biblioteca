@@ -5,6 +5,7 @@ import com.guilhermeonizio.biblioteca.repository.LivroRepository;
 import com.guilhermeonizio.biblioteca.service.LivroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +24,9 @@ public class LivroController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Livro> buscarLivro(@PathVariable Long id) {
-        return livroService.buscarLivro(id);
+    public ResponseEntity<Livro> buscarLivro(@PathVariable Long id) {
+        Livro livro = livroService.buscarLivro(id); // O método agora retorna diretamente o objeto Livro
+        return ResponseEntity.ok(livro);
     }
 
     @PostMapping
